@@ -68,6 +68,7 @@ async def test_import_current_is_positive_and_zero_energy_is_kept() -> None:
                         "ItemId": 7,
                         "LatestPackets": {
                             "PhaseRealTime": {
+                                "ts": 200,
                                 "data": {
                                     "hiavg": [-5.5, 0.0, 1.5],
                                     "huavg": [230.0, 231.0, 232.0],
@@ -136,7 +137,10 @@ async def test_invalid_device_is_skipped_when_another_device_parses() -> None:
                     {
                         "ItemId": 2,
                         "LatestPackets": {
-                            "PhaseRealTime": {"data": {"hiavg": [-1.0], "huavg": [230.0]}}
+                            "PhaseRealTime": {
+                                "ts": 200,
+                                "data": {"hiavg": [-1.0], "huavg": [230.0]},
+                            }
                         },
                     },
                 ],
@@ -148,6 +152,60 @@ async def test_invalid_device_is_skipped_when_another_device_parses() -> None:
 
     assert [packet.item_id for packet in packets] == [2]
     assert api.total_apparent_power_va(packets[0].realtime) == pytest.approx(230.0)
+
+
+@pytest.mark.asyncio
+async def test_missing_realtime_voltage_and_energy_fall_back_to_later_packets() -> None:
+    client, _session = _client(
+        [
+            _Response(
+                200,
+                [
+                    {
+                        "ItemId": 9,
+                        "LatestPackets": {
+                            "PhaseRealTime": {
+                                "ts": 100,
+                                "data": {"hiavg": [-3.7, -3.0, -1.2]},
+                            },
+                            "PhaseMinute": {
+                                "ts": 300,
+                                "data": {
+                                    "hiavg": [-4.2, -3.1, -1.0],
+                                    "huavg": [230.0, 231.0, 232.0],
+                                },
+                            },
+                            "PhaseHour": {
+                                "ts": 50,
+                                "data": {
+                                    "huavg": [230.0, 231.0, 232.0],
+                                    "hiavg": [-9.0, -9.0, -9.0],
+                                    "hwi": 100.5,
+                                    "hwo": 4.0,
+                                },
+                            },
+                        },
+                    }
+                ],
+            )
+        ]
+    )
+
+    item = (await client.get_latest_packets("token"))[0]
+    realtime = item.realtime
+    assert realtime is not None
+    assert api.first_value(
+        item.measurement_packets(),
+        lambda packet: packet.voltage[0] if packet.voltage else None,
+    ) == 230.0
+    assert api.first_value(
+        item.measurement_packets(), lambda packet: packet.current[0]
+    ) == pytest.approx(4.2)
+    assert api.first_value(
+        item.measurement_packets(), lambda packet: api.apparent_power_va(packet, 0)
+    ) == pytest.approx(4.2 * 230.0)
+    assert api.first_value(item.energy_packets(), lambda packet: packet.imported_energy) == 100.5
+    assert api.first_value(item.energy_packets(), lambda packet: packet.exported_energy) == 4.0
 
 
 @pytest.mark.asyncio

@@ -21,7 +21,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .api import Packet, apparent_power_va, total_apparent_power_va
+from .api import Packet, apparent_power_va, first_value, total_apparent_power_va
 from .coordinator import PerificCoordinator
 from .entity import PerificEntity
 
@@ -165,5 +165,9 @@ class PerificSensor(PerificEntity, SensorEntity):
         )
         if item is None:
             return None
-        packet = item.minute if self.entity_description.use_minute_packet else item.realtime
-        return self.entity_description.value_fn(packet) if packet is not None else None
+        packets = (
+            item.energy_packets()
+            if self.entity_description.use_minute_packet
+            else item.measurement_packets()
+        )
+        return first_value(packets, self.entity_description.value_fn)

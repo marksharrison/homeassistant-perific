@@ -54,6 +54,7 @@ class Device:
 class Packet:
     """A measurement packet, retaining only values used by the integration."""
 
+    updated: int | None
     current: tuple[float | None, ...]
     voltage: tuple[float | None, ...]
     imported_energy: float | None
@@ -62,11 +63,21 @@ class Packet:
 
 @dataclass(frozen=True, slots=True)
 class DevicePackets:
-    """The latest packets for one device."""
+    """The latest packets for one device, newest measurement first."""
 
     item_id: int
-    minute: Packet | None
     realtime: Packet | None
+    minute: Packet | None
+    hour: Packet | None
+    day: Packet | None
+
+    def measurement_packets(self) -> tuple[Packet | None, ...]:
+        """Return live packets. Hour and day values are averages and stay still."""
+        return (self.realtime, self.minute)
+
+    def energy_packets(self) -> tuple[Packet | None, ...]:
+        """Return packets ordered for cumulative energy counters."""
+        return (self.minute, self.hour, self.day, self.realtime)
 
 
 class Client:
@@ -169,8 +180,10 @@ class Client:
         packets = data["LatestPackets"]
         return DevicePackets(
             item_id=int(data["ItemId"]),
-            minute=cls._parse_packet(packets.get("PhaseMinute")),
             realtime=cls._parse_packet(packets.get("PhaseRealTime")),
+            minute=cls._parse_packet(packets.get("PhaseMinute")),
+            hour=cls._parse_packet(packets.get("PhaseHour")),
+            day=cls._parse_packet(packets.get("PhaseDay")),
         )
 
     @staticmethod
@@ -182,6 +195,7 @@ class Client:
         current = payload.get("hiavg") or payload.get("iavg") or []
         voltage = payload.get("huavg") or payload.get("uavg") or []
         return Packet(
+            updated=int(data["ts"]) if data.get("ts") is not None else None,
             current=tuple(None if value is None else -float(value) for value in current),
             voltage=tuple(None if value is None else float(value) for value in voltage),
             imported_energy=(
@@ -205,6 +219,30 @@ async def call_with_token_refresh(
     except PerificAuthenticationError:
         current = await refresh()
         return current, await call(current)
+
+
+def first_value(
+    packets: tuple[Packet | None, ...],
+    read: Callable[[Packet], float | None],
+) -> float | None:
+    """Return the measurement from the newest packet that contains it."""
+    selected: float | None = None
+    selected_at = -1
+    fallback: float | None = None
+    for packet in packets:
+        if packet is None:
+            continue
+        value = read(packet)
+        if value is None:
+            continue
+        if packet.updated is None:
+            if fallback is None:
+                fallback = value
+            continue
+        if packet.updated >= selected_at:
+            selected = value
+            selected_at = packet.updated
+    return selected if selected is not None else fallback
 
 
 def apparent_power_va(packet: Packet, phase: int) -> float | None:

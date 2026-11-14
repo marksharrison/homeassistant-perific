@@ -8,16 +8,16 @@ Each device exposes:
 
 | Sensor | Unit | Source |
 | --- | --- | --- |
-| Voltage L1–L3 | V | Realtime packet |
-| Current L1–L3 | A | Realtime packet |
-| Apparent power L1–L3 | VA | Realtime voltage × current |
+| Voltage L1–L3 | V | Newest packet that includes voltage |
+| Current L1–L3 | A | Newest packet that includes current |
+| Apparent power L1–L3 | VA | Newest packet that includes both voltage and current |
 | Total apparent power | VA | Sum of the phases that have both voltage and current |
-| Total imported energy | kWh | Minute packet (`hwi`) |
-| Total exported energy | kWh | Minute packet (`hwo`) |
+| Total imported energy | kWh | Newest cumulative `hwi` (minute, then hour, then day) |
+| Total exported energy | kWh | Newest cumulative `hwo` (minute, then hour, then day) |
 
-Current is positive while the meter is importing and negative while it is exporting.
-Apparent power is `|current| × voltage`. These packets do not include a measured
-watt value. The energy sensors are lifetime totals (`total_increasing`).
+Current is positive while the meter is importing. The API sends that direction as a negative number. Apparent power is `|current| × voltage`. Live sensors use the newest realtime or minute packet, not the hour or day averages.
+These packets do not include a measured watt value. The energy sensors are lifetime
+totals (`total_increasing`).
 
 ## Installation
 
