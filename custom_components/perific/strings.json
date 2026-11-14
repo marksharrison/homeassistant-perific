@@ -1,0 +1,42 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "data": {
+          "username": "[%key:common::config_flow::data::username%]",
+          "password": "[%key:common::config_flow::data::password%]"
+        }
+      },
+      "reauth_confirm": {
+        "data": {
+          "password": "[%key:common::config_flow::data::password%]"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+      "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
+      "unknown": "[%key:common::config_flow::error::unknown%]"
+    },
+    "abort": {
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
+      "reauth_successful": "Reauthentication was successful"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "voltage_l1": {"name": "Voltage L1"},
+      "voltage_l2": {"name": "Voltage L2"},
+      "voltage_l3": {"name": "Voltage L3"},
+      "current_l1": {"name": "Current L1"},
+      "current_l2": {"name": "Current L2"},
+      "current_l3": {"name": "Current L3"},
+      "power_l1": {"name": "Apparent power L1"},
+      "power_l2": {"name": "Apparent power L2"},
+      "power_l3": {"name": "Apparent power L3"},
+      "power_total": {"name": "Total apparent power"},
+      "energy_total": {"name": "Total imported energy"},
+      "energy_export": {"name": "Total exported energy"}
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "domain": "perific",
+  "name": "Perific Meter",
+  "codeowners": ["@pokeyo-ab"],
+  "config_flow": true,
+  "documentation": "https://github.com/Pokeyo-AB/homeassistant-perific",
+  "iot_class": "cloud_polling",
+  "version": "0.1.0"
+}

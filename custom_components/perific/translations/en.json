@@ -1,0 +1,42 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "data": {
+          "username": "Username",
+          "password": "Password"
+        }
+      },
+      "reauth_confirm": {
+        "data": {
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect",
+      "invalid_auth": "Invalid authentication",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_configured": "Device is already configured",
+      "reauth_successful": "Reauthentication was successful"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "voltage_l1": {"name": "Voltage L1"},
+      "voltage_l2": {"name": "Voltage L2"},
+      "voltage_l3": {"name": "Voltage L3"},
+      "current_l1": {"name": "Current L1"},
+      "current_l2": {"name": "Current L2"},
+      "current_l3": {"name": "Current L3"},
+      "power_l1": {"name": "Apparent power L1"},
+      "power_l2": {"name": "Apparent power L2"},
+      "power_l3": {"name": "Apparent power L3"},
+      "power_total": {"name": "Total apparent power"},
+      "energy_total": {"name": "Total imported energy"},
+      "energy_export": {"name": "Total exported energy"}
+    }
+  }
+}
